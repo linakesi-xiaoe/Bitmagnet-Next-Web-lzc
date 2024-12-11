@@ -1,0 +1,51 @@
+lzc-sdk-version: "0.1"
+name: 网磁黑洞
+package: iamxiaoe.lzcapp.bitmagnet-next
+version: 0.0.2
+description: BitMagnet Next!
+homepage: https://github.com/journey-ad/Bitmagnet-Next-Web
+author: journey-ad
+application:
+  subdomain: bitmagnet
+  background_task: true
+  multi_instance: false
+  gpu_accel: false
+  kvm_accel: false
+  usb_accel: false
+  routes:
+    - /=http://bitmagnet-next-web.iamxiaoe.lzcapp.bitmagnet-next.lzcapp:3000/
+    - /admin=http://bitmagnet.iamxiaoe.lzcapp.bitmagnet-next.lzcapp:3333/
+  ingress:
+    - protocol: tcp
+      port: 3334
+      service: bitmagnet
+    - protocol: udp
+      port: 3334
+      service: bitmagnet
+services:
+  bitmagnet-next-web:
+    image: registry.lazycat.cloud/journey0ad/bitmagnet-next-web:0.0.1
+    environment:
+      - POSTGRES_DB_URL=postgres://postgres:postgres@postgres:5432/bitmagnet
+    depends_on:
+      - postgres
+  bitmagnet:
+    image: registry.lazycat.cloud/ghcr.io/bitmagnet-io/bitmagnet:0.0.1
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DHT_CRAWLER_BOOTSTRAP_NODES=router.utorrent.com:6881,router.bittorrent.com:6881,dht.transmissionbt.com:6881,dht.aelitis.com:6881,dht.libtorrent.org:25401,82.221.103.244:6881,67.215.246.10:6881,87.98.162.88:6881,34.229.89.117:6881,185.157.221.247:25401
+      - LOG_LEVEL=info
+      - TMDB_ENABLED=false
+    entrypoint: /usr/local/bin/bitmagnet
+    command: "worker run --keys=dht_crawler --keys=http_server --keys=queue_server"
+    depends_on:
+      - postgres
+  postgres:
+    image: registry.lazycat.cloud/postgres-16-alpine:0.0.1
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bitmagnet
+      - PGUSER=postgres
+    binds:
+      - /lzcapp/var/data:/var/lib/postgresql/data
